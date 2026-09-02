@@ -1,0 +1,1120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Скоринг гипотез конвертеров — Web3 Academy</title>
+<style>
+  :root {
+    --bg: #131313;
+    --bg-elev: #1a1a1a;
+    --bg-input: #101010;
+    --stroke: #2a2a2a;
+    --stroke-2: #383838;
+    --text: #e8e8e8;
+    --text-2: #a8a8a8;
+    --text-3: #7a7a7a;
+    --text-4: #5c5c5c;
+    --accent: #4a9eff;
+    --warn: #d9a441;
+    --danger: #e05c5c;
+    --ok: #4caf7d;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 22px 90px; }
+  h1 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; font-weight: 600; }
+  h2 { font-size: 18px; margin: 0 0 10px; font-weight: 600; }
+  h3 { font-size: 15px; margin: 0 0 6px; font-weight: 600; }
+  p { margin: 0 0 10px; }
+  a { color: var(--accent); }
+  .muted { color: var(--text-2); }
+  .dim { color: var(--text-3); }
+  .small { font-size: 12.5px; }
+  .tiny { font-size: 11.5px; color: var(--text-4); }
+  .num { font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  @media (max-width: 860px) {
+    .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
+  }
+  hr { border: 0; border-top: 1px solid var(--stroke); margin: 26px 0; }
+
+  .card { border: 1px solid var(--stroke); border-radius: var(--radius); background: var(--bg-elev); }
+  .card-h {
+    padding: 8px 14px; border-bottom: 1px solid var(--stroke);
+    font-size: 12px; color: var(--text-2); display: flex; justify-content: space-between; gap: 10px;
+  }
+  .card-b { padding: 14px; }
+
+  .callout { border: 1px solid var(--stroke); border-left: 2px solid var(--stroke-2); border-radius: var(--radius); padding: 13px 15px; margin: 0 0 14px; background: var(--bg-elev); }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout.info { border-left-color: var(--accent); }
+  .callout.danger { border-left-color: var(--danger); }
+  .callout .t { font-weight: 600; margin-bottom: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl { border: 1px solid var(--stroke); border-radius: var(--radius); overflow: hidden; }
+  th { text-align: left; font-weight: 500; color: var(--text-3); font-size: 11.5px; padding: 8px 10px; border-bottom: 1px solid var(--stroke); background: #171717; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--stroke); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  .ta-r { text-align: right; }
+  .ta-c { text-align: center; }
+
+  .pill { display: inline-block; font-size: 11px; padding: 1px 7px; border: 1px solid var(--stroke-2); border-radius: 99px; color: var(--text-2); white-space: nowrap; }
+  .pill.on { background: #232323; color: var(--text); }
+  .pill.acc { border-color: var(--accent); color: var(--accent); }
+
+  button, .btn {
+    font: inherit; font-size: 13px; cursor: pointer;
+    background: #202020; color: var(--text);
+    border: 1px solid var(--stroke-2); border-radius: 6px; padding: 5px 12px;
+  }
+  button:hover { background: #282828; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #08111c; font-weight: 600; }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.tab { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 7px 2px; color: var(--text-3); }
+  button.tab.on { color: var(--text); border-bottom-color: var(--accent); }
+
+  input[type="number"], input[type="text"], select, textarea {
+    font: inherit; font-size: 13px; background: var(--bg-input); color: var(--text);
+    border: 1px solid var(--stroke-2); border-radius: 6px; padding: 5px 8px;
+  }
+  input[type="number"] { width: 74px; }
+  input:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); outline-offset: -1px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+  label.fld { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--text-3); }
+
+  .bar { width: 120px; height: 6px; background: #262626; border-radius: 2px; overflow: hidden; }
+  .bar > i { display: block; height: 6px; background: #454545; border-radius: 2px; }
+  .bar.top > i { background: var(--accent); }
+
+  .quote { border-left: 2px solid var(--stroke-2); padding: 2px 0 2px 12px; color: var(--text-2); font-style: italic; margin: 10px 0 4px; }
+  details { border-top: 1px solid var(--stroke); padding-top: 10px; margin-top: 12px; }
+  details > summary { cursor: pointer; font-size: 12.5px; color: var(--text-2); list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before { content: "▸ "; color: var(--text-4); }
+  details[open] > summary::before { content: "▾ "; }
+  ul.tight { margin: 8px 0 0; padding-left: 18px; }
+  ul.tight li { margin-bottom: 5px; color: var(--text-2); font-size: 12.5px; }
+
+  .stat { display: flex; flex-direction: column; }
+  .stat .v { font-size: 20px; font-weight: 600; }
+  .stat .l { font-size: 11.5px; color: var(--text-3); }
+
+  .sticky-save {
+    position: sticky; bottom: 0; margin-top: 20px;
+    background: #161616; border: 1px solid var(--stroke); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  }
+  .hidden { display: none !important; }
+  .locked { border: 1px dashed var(--stroke-2); border-radius: var(--radius); padding: 30px; text-align: center; color: var(--text-3); }
+  .spread-hi { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Скоринг гипотез конвертеров</h1>
+  <p class="muted">
+    Задача «Отскорить гипотезы конвертеров» и комментарий Миши в ней, страница «Гипотезы привлечения:
+    Финансовый кризис + ИИ-угроза», Content Weekly 10.08 / 24.08 / 31.08, Weekly 17.08 / 24.08 / 31.08,
+    звонок Саша—Миша 02.09.
+  </p>
+
+  <div class="row" style="margin:18px 0 6px; gap:20px; border-bottom:1px solid var(--stroke);">
+    <button class="tab on" data-tab="context">Контекст</button>
+    <button class="tab" data-tab="score">Моя оценка</button>
+    <button class="tab" data-tab="method">Методика</button>
+    <button class="tab" data-tab="team">Сводка команды</button>
+  </div>
+
+  <div id="apiWarn" class="callout warn hidden" style="margin-top:16px;">
+    <div class="t">Хранилище не подключено</div>
+    <p class="small muted" style="margin:0;">
+      В файле не задан адрес Google Apps Script, поэтому отправка оценок в общую таблицу недоступна.
+      Оценки сохраняются в этом браузере, а отправить их можно кнопкой «Скопировать результат» —
+      скопированный текст нужно прислать Саше.
+    </p>
+  </div>
+
+  <!-- ================= КОНТЕКСТ ================= -->
+  <section id="tab-context" style="margin-top:20px;">
+    <div class="callout warn">
+      <div class="t">Рамка, которую задал сам Миша: выбор одного конвертера может быть неверной постановкой</div>
+      <p class="muted">
+        «Независимо от того что мы выберем — нужно готовиться к тому что "в моменте" трафик не будет
+        окупаться... Возможно что ни статья, ни видео-ЛМ, ни автовеб не будут окупаться по отдельности.
+        Но если их собрать в каскад и по нему протаскивать всех кого закупаем, попутно подписывая на все
+        наши медиа — это будет работать. Окупаться в рамках 1-2 мес.»
+      </p>
+      <p class="small dim" style="margin:0;">
+        Практическое следствие: таблица ранжирует, что запускать первым и в каком порядке, а не что выбрать
+        единственным. Порог успеха теста — «даёт ли сигнал и растит ли базу», а не «окупился ли в моменте»,
+        иначе стоп-гоу зарубит всё подряд.
+      </p>
+    </div>
+
+    <div class="callout info">
+      <div class="t">Новые данные от 02.09 меняют вес фактора доверия</div>
+      <p class="muted" style="margin:0;">
+        С YouTube пришло 205 лидов, и на той же самой статье конверсии попадают в план или выше. Холодный
+        Facebook на той же статье даёт конверсию в заказ около 12%, но в оплату только 25% — итог близок к нулю.
+        Форму оплаты проверили руками, она в порядке. Значит, разрыв объясняется не конвертером, а доверием к
+        источнику. Это поднимает Confidence у Telegram-нативной архитектуры и у всего, что показывает живого
+        человека до оффера, и понижает ожидания от любого обезличенного лендинга на холодном трафике.
+      </p>
+    </div>
+
+    <hr />
+    <h2>Что скоринг не решает</h2>
+    <div class="grid2" style="margin-bottom:16px;">
+      <div>
+        <h3>Энгл и конвертер — разные оси</h3>
+        <p class="muted small">
+          Обе проработанные гипотезы энглов, «Финансовый кризис» и «ИИ-угроза», уже зафиксированы с конвертером
+          «автовебинар». Но они делят общую середину и оффер — сравнение золота, депозита, недвижимости и
+          крипты, — а различаются только входом. Значит, второй заход стоит не «ещё одна воронка», а только
+          новые креативы и первые две-три минуты. Их правильнее ставить не конкурентами, а двумя креативными
+          входами в один тест.
+        </p>
+      </div>
+      <div>
+        <h3>Атрибуция как предусловие, а не как фактор</h3>
+        <p class="muted small">
+          Из 6 млн ₽, вложенных в холодный трафик, затрекано оплат примерно на 2,5–3 млн. Если реально
+          трекается половина, воронка выходила в ноль, но точно этого никто не знает. Пока переход
+          Telegram → GetCourse не метчится по TG ID, любой тест даёт неполный ответ. Разметку надо закрыть до
+          старта следующего теста.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <div class="t">Внешний дедлайн: выборы</div>
+      <p class="muted small" style="margin:0;">
+        Аккаунты ВК и Одноклассников выданы в ночь на 02.09, условия согласованы, Кирилл готовит медиаплан.
+        Через пару недель начинается предвыборный период, когда рекламу могут тормозить целиком. Это сдвигает
+        вес фактора Time-to-signal вверх независимо от того, какая гипотеза победит: окно на чистый тест
+        измеряется неделями, а не месяцами.
+      </p>
+    </div>
+
+    <h2 style="margin-top:24px;">Порядок заполнения</h2>
+    <p class="muted">
+      Оценки в форме — черновик Саши, специально проставленный так, чтобы было что оспаривать. Пятеро
+      проставляют свои независимо и вслепую: Саша, Миша, Иван, Фил и Кирилл. Фил и Кирилл дают в первую
+      очередь Effort и Time-to-signal, потому что реализация упирается в них; Миша и Иван — Impact и
+      Confidence. Расхождение больше двух баллов по Impact или больше чем вдвое по Effort выносим на
+      обсуждение, остальное усредняем.
+    </p>
+    <p class="muted">
+      Результат — не один победитель, а очередь тестов на сентябрь и октябрь с владельцем и датой старта на
+      каждый. VSL из скоринга не исключён, но и не пересматривается: он доводится до теста в любом случае и
+      стоит в таблице как точка отсчёта.
+    </p>
+    <p class="small dim">
+      Сводка по команде открывается только после того, как вы отправите свои оценки — чтобы чужие числа не
+      заякорили ваши.
+    </p>
+  </section>
+
+  <!-- ================= МОЯ ОЦЕНКА ================= -->
+  <section id="tab-score" class="hidden" style="margin-top:20px;">
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-h"><span>Кто заполняет</span><span id="whoStatus" class="dim"></span></div>
+      <div class="card-b">
+        <div class="row">
+          <select id="person">
+            <option value="">— выберите себя —</option>
+            <option>Александр Савельев</option>
+            <option>Михаил Симонов</option>
+            <option>Иван Шашков</option>
+            <option>Филипп Тимуш</option>
+            <option>Кирилл Осипов</option>
+          </select>
+          <span class="small dim">Черновик сохраняется в браузере автоматически. Можно заполнить в два захода.</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="weightsPanel"></div>
+
+    <h2 style="margin-top:22px;">Ранжирование по вашим оценкам</h2>
+    <div id="myRanking" class="tbl" style="margin-bottom:8px;"></div>
+    <p class="tiny">
+      Пересчитывается на лету. Расшифровка факторов и шкал — во вкладке «Методика».
+    </p>
+
+    <div class="callout" style="margin-top:16px;">
+      <div class="t">Что показывает переключение весов</div>
+      <p class="muted small" style="margin:0;">
+        При равных весах наверх выходит выдача VSL в личку Telegram — просто потому, что она дешевле всех
+        остальных в сборке. Стоит переключиться на пресет «Потенциал», и первым становится быстрый автовебинар
+        с заметным отрывом, за ним Telegram-нативная воронка. Спор идёт не про формат конвертера, а про то,
+        какой вес мы даём размеру приза против цены проверки.
+      </p>
+    </div>
+
+    <hr />
+    <h2>Гипотезы</h2>
+    <p class="muted small" style="margin-bottom:16px;">
+      Значения по умолчанию — черновик Саши. Меняйте на свои. Плюсы и минусы по квизу и автовебу приведены
+      дословно из комментария Миши к задаче, остальные собраны из транскриптов встреч.
+    </p>
+    <div id="hypoList" class="col" style="gap:14px;"></div>
+
+    <div class="sticky-save">
+      <button id="saveBtn" class="primary">Отправить оценки</button>
+      <button id="copyBtn">Скопировать результат</button>
+      <button id="resetBtn">Сбросить к черновику</button>
+      <span id="saveStatus" class="small dim"></span>
+    </div>
+  </section>
+
+  <!-- ================= МЕТОДИКА ================= -->
+  <section id="tab-method" class="hidden" style="margin-top:20px;">
+    <h2>Как читать факторы</h2>
+    <p class="muted">
+      Все четыре оценки ставятся про один и тот же момент — про запуск теста, а не про полноценный запуск
+      воронки в продакшн. Вопрос всегда один: «сколько стоит и сколько занимает узнать, работает это или нет».
+    </p>
+
+    <div class="grid2" style="margin:18px 0;">
+      <div>
+        <h3>Impact — размер приза</h3>
+        <p class="muted small">
+          Сколько денег принесёт гипотеза в месяц, если сработает. Оценка ставится про удачный исход, а не про
+          ожидаемый — вероятность живёт отдельно, в Confidence. Частая ошибка: занижать Impact, потому что
+          «вряд ли получится». Это уже учтено в другом факторе, иначе риск считается дважды.
+        </p>
+        <div class="tbl"><table>
+          <tr><th class="ta-r" style="width:60px;">Балл</th><th>Что это значит</th></tr>
+          <tr><td class="ta-r num">0.25</td><td class="muted">Микрооптимизация: единицы процентов на одном шаге</td></tr>
+          <tr><td class="ta-r num">0.5</td><td class="muted">Заметно, но картину месяца не меняет</td></tr>
+          <tr><td class="ta-r num">1</td><td class="muted">Сопоставимо с вкладом одного текущего канала</td></tr>
+          <tr><td class="ta-r num">2</td><td class="muted">Удваивает поток лидов или открывает новый канал продаж</td></tr>
+          <tr><td class="ta-r num">3</td><td class="muted">Может стать основным конвертером и вытянуть план</td></tr>
+        </table></div>
+      </div>
+      <div>
+        <h3>Confidence — сила доказательств</h3>
+        <p class="muted small">
+          Не «нравится ли мне гипотеза», а «на что опирается оценка Impact». Личная вера сюда не входит: если
+          доказательств нет, честные 20% лучше, чем 70% из энтузиазма. Именно этот фактор разводит квиз и
+          автовеб — потенциал у них одинаковый, а подтверждений принципиально разное количество.
+        </p>
+        <div class="tbl"><table>
+          <tr><th class="ta-r" style="width:60px;">Балл</th><th>Что это значит</th></tr>
+          <tr><td class="ta-r num">20%</td><td class="muted">Ничего похожего не делали — чистая гипотеза</td></tr>
+          <tr><td class="ta-r num">50%</td><td class="muted">Есть внешний референс: работает у конкурентов, сами провалились в такую воронку</td></tr>
+          <tr><td class="ta-r num">80%</td><td class="muted">Есть свои цифры из прошлого опыта команды</td></tr>
+          <tr><td class="ta-r num">100%</td><td class="muted">Воспроизводимо: знаем механику и целевые метрики</td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-bottom:18px;">
+      <div>
+        <h3>Effort — цена входа</h3>
+        <p class="muted small">
+          Человеко-дни команды до момента, когда на воронку пошёл трафик. Считается в человеко-днях, а не в
+          календарных: если Фил пишет тексты 3 дня, а Иван параллельно верстает лендинг 2 дня, это 5
+          человеко-дней, хотя календарно прошло 3. Ожидание результата сюда не входит.
+        </p>
+        <p class="muted small">
+          Экономический смысл: столько ресурса вы теряете, если гипотеза не сработала. Узкое горлышко — Фил на
+          текстах и Иван на съёмке и вёрстке, у обоих очередь, поэтому их оценка Effort весит больше остальных.
+        </p>
+      </div>
+      <div>
+        <h3>Time-to-signal — скорость ответа</h3>
+        <p class="muted small">
+          Календарные дни от решения запускать до момента, когда данных хватает на стоп или гоу. Целевое
+          событие — оплата трипваера, а не покупка флагмана после него, поэтому длинного цикла сделки здесь нет
+          и число шагов в воронке почти не влияет. Влияет скорость, с которой вы физически наберёте выборку.
+        </p>
+        <p class="muted small">
+          Складывается из трёх слагаемых: допуск канала, открутка нужного объёма трафика и внутренний лаг
+          воронки — сколько проходит от лида до целевого события.
+        </p>
+      </div>
+    </div>
+
+    <h3>Из чего складывается Time-to-signal</h3>
+    <div class="grid3" style="margin:10px 0 18px;">
+      <div>
+        <div class="small" style="font-weight:600;">1. Допуск канала</div>
+        <p class="muted small">
+          Модерация креативов, прогрев кабинета, обучение алгоритма. В новом кабинете 3–5 дней. Кирилл
+          предупреждает, что здесь легче всего ошибиться: «некоторые проливают бюджет и там останавливают очень
+          рано, не дают системе ещё обучиться». При штормах в Facebook слагаемое становится непредсказуемым — и
+          в этом главный аргумент за диверсификацию площадок.
+        </p>
+      </div>
+      <div>
+        <div class="small" style="font-weight:600;">2. Открутка объёма</div>
+        <p class="muted small">
+          Главное слагаемое и главная зависимость. Требуемое число лидов делится на дневную скорость набора, то
+          есть на дневной бюджет, делённый на CPL. Потолок здесь не деньги, а дневные лимиты кампании: залить
+          месячный бюджет за два дня нельзя. Иван про прошлый тест: «могли эти сто лидов запустить за неделю, а
+          не за полгода — можно просто было бюджет на день повысить».
+        </p>
+      </div>
+      <div>
+        <div class="small" style="font-weight:600;">3. Внутренний лаг воронки</div>
+        <p class="muted small">
+          От лида до целевого события. У квиза он нулевой — заявка падает в ОП сразу. У evergreen-автовеба 2–3
+          дня на доходимость, если повторы идут часто. У Telegram-канала около недели, пока подписчик доберётся
+          до закрепа. Это единственное слагаемое, которое зависит от самого конвертера.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-h"><span>Расчёт срока ответа</span><span class="dim">подставьте цифры из медиаплана</span></div>
+      <div class="card-b">
+        <div class="row" style="gap:18px; align-items:flex-end;">
+          <label class="fld">Дневной бюджет, ₽<input type="number" id="ttsBudget" value="5000" step="500" min="0" /></label>
+          <label class="fld">CPL, ₽<input type="number" id="ttsCpl" value="450" step="50" min="1" /></label>
+          <label class="fld">Нужно лидов<input type="number" id="ttsLeads" value="110" step="10" min="1" /></label>
+          <label class="fld">Допуск канала, дн<input type="number" id="ttsAdm" value="4" step="1" min="0" /></label>
+        </div>
+        <hr style="margin:14px 0;" />
+        <div class="row" style="gap:34px;">
+          <div class="stat"><span class="v num" id="ttsPerDay">—</span><span class="l">Лидов в день</span></div>
+          <div class="stat"><span class="v num" id="ttsDays">—</span><span class="l">Открутка объёма</span></div>
+          <div class="stat"><span class="v num" id="ttsBase">—</span><span class="l">Базовый Time-to-signal</span></div>
+        </div>
+        <p class="small muted" style="margin:14px 0 0;">
+          К базовому сроку прибавьте внутренний лаг конкретной гипотезы: 0 дней у квиза, 2–3 у
+          evergreen-автовеба, около недели у Telegram-канала. Значения по умолчанию взяты из обсуждений: CPL
+          около 450 ₽ при курсе 85 и лиде примерно 5 $, минимальный бюджет на одну воронку 50 тысяч по оценке
+          Кирилла, и порядка сотни лидов как выборка, на которой Иван предлагал делать выводы.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="t">Следствие: под платным трафиком фактор почти перестаёт разводить конвертеры</div>
+      <p class="muted small">
+        Если скорость ответа определяется откруткой, а не глубиной воронки, то у всех конвертеров под холодный
+        платный трафик Time-to-signal сходится в узкий диапазон 12–16 дней. Реально разводит он другое:
+        готовность канала — открытый кабинет против ожидания модерации, — и возможность проверить гипотезу на
+        тёплой базе, где открутка не нужна вообще и ответ приходит за 2–3 дня. Telegram-нативная воронка
+        выбивается вверх до 20 дней только из-за третьего слагаемого.
+      </p>
+      <p class="muted small" style="margin:0;">
+        Практический вывод для заполнения: не пытайтесь развести гипотезы по Time-to-signal, если они льются из
+        одного кабинета с одним бюджетом — там ставьте одинаковые числа. Разница между ними живёт в Effort и
+        Confidence.
+      </p>
+    </div>
+
+    <div class="callout">
+      <div class="t">Time-to-signal — это ещё и проверка медиаплана</div>
+      <p class="muted small" style="margin:0;">
+        Срок берётся из медиаплана Кирилла: заявленный дневной бюджет и ожидаемый CPL дают расчётную дату
+        решения. Тест проверяет не только конвертер, но и сам план — сошлись ли реальная скорость открутки и
+        реальный CPL с обещанными. Расхождение здесь самостоятельный результат: если фактический CPL вдвое выше
+        плана, дата решения уезжает вдвое, и это надо фиксировать отдельно от вывода про воронку, иначе вы
+        спишете на конвертер проблему канала.
+      </p>
+    </div>
+
+    <hr />
+    <h3>Гейты — фильтры, а не баллы</h3>
+    <p class="muted small">
+      Гейты не входят в формулу и не добавляют очков. Это два вопроса «имеет ли смысл вообще считать баллы».
+      Тумблеры над таблицей просто прячут строки, которые гейт не проходят. Выключенный гейт не значит, что
+      гипотеза плохая — он значит, что при этом требовании её в списке не будет.
+    </p>
+    <div class="grid2" style="margin-top:12px;">
+      <div>
+        <div style="font-weight:600;">ОП работает с лидом в день заявки</div>
+        <p class="muted small">
+          Может ли отдел продаж поговорить с человеком, пока он тёплый. Это критерий Миши от 17.08: «нам нужно
+          продумать CGM, в котором у отдела продаж будет возможность продавать на тот трафик, который мы
+          закупаем». Если гейт не проходит, воронка работает бинарно — либо продала сама, либо деньги потеряны,
+          и доработать нечего. Ровно это произошло со статьёй: база осталась, а сделать с ней нечего.
+        </p>
+      </div>
+      <div>
+        <div style="font-weight:600;">Сохраняется сквозная атрибуция</div>
+        <p class="muted small">
+          Доживёт ли метка от клика до оплаты. Если нет, тест даст цифру, которую нельзя интерпретировать: вы не
+          узнаете, окупился он или нет. Из 6 млн ₽, вложенных в холодный трафик, затрекано оплат примерно на
+          2,5–3 млн — и до сих пор неизвестно, это провал воронки или дыра в трекинге. Пока переход
+          Telegram → GetCourse не метчится по TG ID, этот гейт стоит держать включённым.
+        </p>
+      </div>
+    </div>
+    <p class="small dim" style="margin-top:12px;">
+      Полезный приём: включить оба тумблера сразу и посмотреть, что выживает. Это показывает список гипотез,
+      которые дают не только продажи, но и управляемость — возможность вмешаться руками и посчитать результат.
+    </p>
+  </section>
+
+  <!-- ================= СВОДКА ================= -->
+  <section id="tab-team" class="hidden" style="margin-top:20px;">
+    <div id="teamLocked" class="locked">
+      Сводка откроется после того, как вы отправите свои оценки во вкладке «Моя оценка».<br />
+      <span class="small">Так чужие числа не заякорят ваши.</span>
+    </div>
+    <div id="teamBody" class="hidden">
+      <div class="row" style="justify-content:space-between; margin-bottom:14px;">
+        <h2 style="margin:0;">Итоговое ранжирование по средним оценкам</h2>
+        <button id="reloadBtn">Обновить данные</button>
+      </div>
+      <div id="teamWeights"></div>
+      <div id="teamRanking" class="tbl" style="margin:12px 0 8px;"></div>
+      <p class="tiny" id="teamMeta"></p>
+
+      <div id="disagree"></div>
+
+      <h2 style="margin-top:26px;">Кто что поставил</h2>
+      <div id="teamRaw" class="tbl"></div>
+      <p class="tiny">
+        В общей таблице хранится по одной строке на пару «человек и гипотеза». Повторная отправка перезаписывает
+        предыдущие значения того же человека.
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   НАСТРОЙКА: сюда вставляется /exec URL Google Apps Script.
+   Можно также передать через ?api=... в адресной строке.
+   ============================================================ */
+var API_URL = "";
+
+(function () {
+  var qs = new URLSearchParams(location.search);
+  if (qs.get("api")) API_URL = qs.get("api");
+})();
+
+var HYPOS = [
+  {
+    id: "article",
+    name: "Статья-лонгрид на холодном трафике",
+    author: "Фил · выбрана опросом полгода назад",
+    source: "Weekly 17.08, 31.08 · Саша/Миша 02.09",
+    status: "Контроль",
+    desc: "Контрольная строка: ничего не менять, довести существующую статейную воронку до объёма трафика через ВК и Одноклассники и снять чистые цифры. Без неё скоринг сравнивает новинки между собой и систематически недооценивает доведение начатого.",
+    quote: "Какой смысл вообще в целом торопиться с веселькой, если мы даже статью не запустили и не получили какого-то объективного реального траффика, на котором можно было бы сделать выводы какие-то?",
+    quoteWho: "Иван, Content Weekly 31.08",
+    impact: 0.5, confidence: 85, effort: 2, signal: 14,
+    opGate: false, attrGate: true,
+    prosSource: "Из встреч",
+    pros: [
+      "Полностью готова — нужен только трафик и открытые кабинеты",
+      "Под неё уже утверждены пороги стоп-гоу: CPL, конверсия во вторую страницу, в заказ, финальная",
+      "На тёплом трафике с YouTube конверсии попадают в план или выше — 205 лидов, конверсия в заказ близка к целевой"
+    ],
+    cons: [
+      "На холодном FB конверсия в заказ ~12%, но в оплату всего 25% — итоговый выхлоп около нуля",
+      "ОП не может работать с лидом: человек уходит в заказ, диалога нет",
+      "Полгода на один тест и нулевой результат — Миша считает это главной проблемой процесса"
+    ]
+  },
+  {
+    id: "vsl",
+    name: "VSL-лендинг",
+    author: "Миша инициатор · Иван записывает видео",
+    source: "Content Weekly 10.08 · Weekly 17.08, 31.08",
+    status: "Решено делать",
+    desc: "Видеопродажник на отдельном лендинге по нарративу статьи-расследования. Лендинг свёрстан, тексты правятся, видео пишется. Решение доводить принято вне скоринга — строка нужна как точка отсчёта для остальных.",
+    quote: "Я предлагаю сразу ее упаковать и в формат статьи и в формат VSL-видео... я реально верю в видео-формат.",
+    quoteWho: "Миша, Content Weekly 10.08",
+    impact: 2, confidence: 50, effort: 5, signal: 14,
+    opGate: false, attrGate: true,
+    prosSource: "Из встреч",
+    pros: [
+      "Видео решает диагностированную проблему доверия лучше обезличенного текста",
+      "Женя из Трафик Ностра отобрал именно VSL-ленд и газетный ленд как то, что стал бы тестировать",
+      "Ассеты переиспользуются: нарезки идут в креативы, в Telegram и в YouTube"
+    ],
+    cons: [
+      "Тот же флоу заявки, что у статьи — ОП по-прежнему не получает диалог с лидом",
+      "Иван возражал против спешки: статью ещё не запустили, сравнивать не с чем",
+      "Зависит от того же холодного трафика, который сейчас блокируется в FB"
+    ]
+  },
+  {
+    id: "quiz",
+    name: "Квиз-воронка",
+    author: "Миша",
+    source: "Weekly 17.08 · комментарий к задаче · Саша/Миша 02.09",
+    status: "Гипотеза",
+    desc: "Человек отвечает на 8 вопросов, сам себя квалифицирует, ОП звонит и делает оффер в тот же день. У коллег в Facebook Ads Library уже крутятся рабочие креативы под квиз. Миша на этой неделе разбирает воронку Штернмайстера как референс.",
+    quote: "Мы закупили трафик, чувак ответил там на 8 вопросов, мы поняли, кто он, созвонились с ним и сделали оффер. И всё.",
+    quoteWho: "Миша, Weekly 31.08",
+    impact: 3, confidence: 20, effort: 8, signal: 12,
+    opGate: true, attrGate: true,
+    prosSource: "Комментарий Миши к задаче",
+    pros: [
+      "Универсальный конвертор и под холодняк, и под тёплый траф",
+      "Под любого эксперта",
+      "Очень качественно квалит трафик — чел нам сам всё о себе рассказывает",
+      "Даёт быстрые и целевые лиды ОП",
+      "Пробивает баннерную слепоту — не сильно заезженный формат",
+      "Нативная и логичная продажа",
+      "Можем сразу продавать хай-чек: флагман или фасттрек, если не купил — даунселл. Очень быстрая воронка",
+      "Можем тестировать любые гипотезы изолированно"
+    ],
+    cons: [
+      "Гипотеза, ничего похожего не делали. Абсолютно неизвестно, как отработает",
+      "Важно выбрать целевой сегмент и спроектировать воронку под него. Универсальный квиз вероятнее всего работать будет слабо"
+    ]
+  },
+  {
+    id: "autoweb-fast",
+    name: "Автовебинар — грязный, за 2 недели",
+    author: "Миша",
+    source: "Weekly 17.08 · Content Weekly 24.08 · комментарий к задаче",
+    status: "Гипотеза",
+    desc: "Записать вебинар в лайве по тезисам Ивана без вылизанных текстов, собрать флоу и посадить ОП на обработку чекинов. Обе проработанные гипотезы энглов — «Финансовый кризис» и «ИИ-угроза» — уже зафиксированы с конвертером «автовебинар».",
+    quote: "From scratch мы можем эту воронку собрать, я уверен, за неделю... даже если он будет хуёвый, он будет работать значительно лучше, чем статейный формат. А через автовеб мы заработали до хуя денег.",
+    quoteWho: "Миша, Content Weekly 24.08",
+    impact: 3, confidence: 80, effort: 12, signal: 16,
+    opGate: true, attrGate: true,
+    prosSource: "Комментарий Миши к задаче",
+    pros: [
+      "Хорошо прогревает холодный трафик, вызывает лояльность и доверие к эксперту. Как итог — продаёт",
+      "У нас большой внутренний опыт и экспертиза в создании таких воронок",
+      "Подтверждённая гипотеза: собрать в онлайне ребят с капиталом и посадить Ваню продавать — деньги в кассе практически гарантированно",
+      "Сама тема кризиса и ИИ хорошо ложится в этот формат",
+      "Активация чата с ОП через бонусы, возможность обработки чекинов",
+      "Видим, кто сколько провёл на вебе и что писал в комменты — ОП получает инфу о каждом чекине",
+      "Можем проталкивать через ОП людей в трипваер, целевым даже бесплатно открывать"
+    ],
+    cons: [
+      "Баннерная слепота. Заезженный формат, люди знают, что им на вебе будут продавать. Инфоцыганский формат, мало доверия",
+      "В среднем цена реги растёт, при этом доходимость до вебов и конверсия в оплату падает",
+      "Сложно продавать сразу флагман, вероятнее всего нужно вести через трипваер",
+      "Из кастдевов: «если я иду на какой-то автовеб, то там с меня что-то хотят поиметь, и я его смотрю настороженно»"
+    ]
+  },
+  {
+    id: "autoweb-polished",
+    name: "Автовебинар — полированный",
+    author: "Миша · развилка по качеству",
+    source: "Content Weekly 24.08",
+    status: "Гипотеза",
+    desc: "Та же воронка, но с проработанным сценарием, съёмкой и дожимом. Отдельная строка нужна, чтобы увидеть цену решения «сделать хорошо»: потенциал тот же, а трудозатраты втрое выше. Иван возражал против упрощения — «не нужно упрощать сильно, иначе нифига конвертить ничего не будет».",
+    impact: 3, confidence: 80, effort: 30, signal: 16,
+    opGate: true, attrGate: true,
+    prosSource: "Из встреч",
+    pros: [
+      "Всё то же, что у быстрой версии, плюс выше шанс пройти порог доверия",
+      "Ассет живёт долго и переиспользуется в запуске"
+    ],
+    cons: [
+      "Месяц до старта теста — прямо противоречит требованию ускоряться",
+      "Риск повторить историю статьи: полгода полировки, ноль обратной связи от рынка"
+    ]
+  },
+  {
+    id: "vsl-dm",
+    name: "VSL с выдачей в личку Telegram",
+    author: "Миша · модель Пырикова",
+    source: "Weekly 17.08",
+    status: "Гипотеза",
+    desc: "Простой лендинг «забери воркшоп», регистрация и редирект не в бота, а в личный аккаунт в Telegram, откуда человеку приходит голосовое и завязывается диалог. Миша сам сконвертился в такую воронку и описал её как живой референс.",
+    quote: "Он тебя редиректит просто в личный телеграм-аккаунт, и он там записывает войс: «Йоу, привет, у меня тут сломался бот, так что я тебе сам руками тут всё отправляю»... тем не менее вот уже как бы есть точка контакта, я ему сам написал.",
+    quoteWho: "Миша, Weekly 17.08",
+    impact: 1.5, confidence: 50, effort: 3, signal: 14,
+    opGate: true, attrGate: false,
+    prosSource: "Из встреч",
+    pros: [
+      "Самая дешёвая по трудозатратам возможность проверить гипотезу доверия",
+      "Сразу даёт живой диалог — ровно тот критерий, который Миша ставит выше всего",
+      "Не требует ни вебинара, ни квиза: переиспользует уже записанное VSL-видео"
+    ],
+    cons: [
+      "Плохо масштабируется — упирается в живого человека, который отвечает, и это же замедляет набор выборки",
+      "Ломает сквозную атрибуцию: переход из Telegram в GetCourse не метчится по TG ID",
+      "Саша притормозил идею: «мы запутаемся, если будем пытаться погасить пожар новыми каналами прямо в моменте»"
+    ]
+  },
+  {
+    id: "tg-native",
+    name: "Telegram-нативная воронка через канал",
+    author: "Миша",
+    source: "Weekly 31.08 · Саша/Миша 02.09",
+    status: "Новое",
+    desc: "Трафик льётся не на воронку, а на канал или лид-магнит: человек видит живой канал с 30 тысячами подписчиков и автора с YouTube на 100 тысяч, и только потом проваливается в статью или VSL из закрепа. Стартовая логика как в мини-курсе, но конвертером выступает расследование или видео.",
+    quote: "Люди понимают, что это не какой-то там скам, а что реальный человек за этим стоит... возможно, там как раз-таки вот эти цифры будут близки к тем, которые мы видим с Ютуба.",
+    quoteWho: "Миша, Саша/Миша 02.09",
+    impact: 2.5, confidence: 65, effort: 6, signal: 20,
+    opGate: true, attrGate: true,
+    prosSource: "Из встреч",
+    pros: [
+      "Прямо адресует диагноз от 02.09: холодный трафик не покупает из-за недоверия, а не из-за конвертера",
+      "Единственная гипотеза, которая чинит атрибуцию — весь путь остаётся внутри Telegram",
+      "Растит базу как актив: по логике Миши 3–5 из 100 окупают трафик, остальные остаются и платят на дистанции",
+      "Переиспользует любой конвертер — статью, VSL или автовеб, это архитектура, а не формат"
+    ],
+    cons: [
+      "В моменте трафик не окупится, окупаемость на горизонте 1–2 месяцев",
+      "Конфликт механик: под Telegram Ads канал должен быть открытым, а автобот запускается только на закрытом",
+      "Кирилл ещё не обсчитал медиаплан — экономика пока неизвестна"
+    ]
+  },
+  {
+    id: "quiz-qualifier",
+    name: "Квиз как квалификатор перед конвертером",
+    author: "Предложение к обсуждению",
+    source: "Не обсуждалось на встречах",
+    status: "Новое",
+    desc: "Квиз ставится не вместо VSL или автовеба, а перед ними: он квалифицирует и сегментирует трафик, отдаёт лид в ОП сразу, а дальше человек уходит на видео под свой сегмент. Снимает главный минус квиза — необходимость выбрать один целевой сегмент заранее.",
+    impact: 2, confidence: 40, effort: 5, signal: 13,
+    opGate: true, attrGate: true,
+    prosSource: "Из встреч",
+    pros: [
+      "Закрывает возражение Миши к квизу: сегмент не выбирается заранее, а определяется ответами",
+      "Даёт ОП лид в день заявки, не отказываясь от прогрева видео",
+      "Переиспользует уже оплаченный VSL вместо конкуренции с ним"
+    ],
+    cons: [
+      "Добавляет шаг в воронку — часть трафика теряется до основного конвертера",
+      "Ни разу не обсуждалось командой, оценки самые грубые в таблице"
+    ]
+  }
+];
+
+var PRESETS = [
+  { id: "balanced",  label: "Равные веса", w: { i:1, c:1, e:1,   t:1   }, note: "Базовая формула без перекосов" },
+  { id: "speed",     label: "Скорость",    w: { i:1, c:1, e:1.5, t:1.5 }, note: "Приоритет тому, что стартует быстро" },
+  { id: "potential", label: "Потенциал",   w: { i:2, c:1, e:0.5, t:0.5 }, note: "Готовы вложиться ради размера приза" },
+  { id: "caution",   label: "Осторожность",w: { i:1, c:2, e:1,   t:1   }, note: "Только то, во что есть доказательства" }
+];
+
+var LS = "w3a-converter-scoring-v1";
+
+var state = {
+  person: "",
+  weights: { i: 1, c: 1, e: 1, t: 1 },
+  gateOp: false,
+  gateAttr: false,
+  values: {},
+  submitted: false
+};
+
+HYPOS.forEach(function (h) {
+  state.values[h.id] = { impact: h.impact, confidence: h.confidence, effort: h.effort, signal: h.signal };
+});
+
+function loadLocal() {
+  try {
+    var raw = localStorage.getItem(LS);
+    if (!raw) return;
+    var saved = JSON.parse(raw);
+    if (saved.person) state.person = saved.person;
+    if (saved.weights) state.weights = saved.weights;
+    if (typeof saved.gateOp === "boolean") state.gateOp = saved.gateOp;
+    if (typeof saved.gateAttr === "boolean") state.gateAttr = saved.gateAttr;
+    if (saved.submitted) state.submitted = true;
+    if (saved.values) {
+      HYPOS.forEach(function (h) {
+        if (saved.values[h.id]) state.values[h.id] = saved.values[h.id];
+      });
+    }
+  } catch (e) { /* повреждённый черновик игнорируем */ }
+}
+function saveLocal() {
+  try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+}
+
+function score(v, w) {
+  var num = Math.pow(v.impact, w.i) * Math.pow(v.confidence / 100, w.c);
+  var den = Math.pow(v.effort, w.e) * Math.pow(v.signal, w.t);
+  if (!den || !isFinite(den)) return 0;
+  var s = (num / den) * 1000;
+  return isFinite(s) ? s : 0;
+}
+function fmtScore(s) { return s >= 100 ? s.toFixed(0) : s.toFixed(1); }
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+
+/* ---------- панель весов ---------- */
+function weightsPanelHTML(idPrefix) {
+  var w = state.weights;
+  var pills = PRESETS.map(function (p) {
+    var on = (p.w.i === w.i && p.w.c === w.c && p.w.e === w.e && p.w.t === w.t);
+    return '<button class="' + (on ? "primary" : "") + '" title="' + esc(p.note) +
+      '" data-preset="' + p.id + '">' + esc(p.label) + "</button>";
+  }).join(" ");
+
+  function sl(key, label, hint) {
+    return '<div class="col" style="gap:3px;">' +
+      '<div class="row" style="justify-content:space-between; gap:6px;"><span class="small" style="font-weight:500;">' +
+      label + '</span><span class="small dim num">' + w[key].toFixed(1) + "</span></div>" +
+      '<input type="range" min="0" max="2" step="0.1" value="' + w[key] + '" data-w="' + key + '" />' +
+      '<span class="tiny">' + hint + "</span></div>";
+  }
+
+  return '<div class="card"><div class="card-h"><span>Модель скоринга</span><span class="dim">' +
+    "Балл = Impact^wI × Confidence^wC ÷ (Effort^wE × Time-to-signal^wT) × 1000</span></div>" +
+    '<div class="card-b"><div class="row" style="margin-bottom:14px;">' + pills + "</div>" +
+    '<div class="grid4">' +
+      sl("i", "Impact", "Потенциал выручки при успехе") +
+      sl("c", "Confidence", "Насколько есть доказательства") +
+      sl("e", "Effort", "Человеко-дни до старта теста") +
+      sl("t", "Time-to-signal", "Дни от старта до стоп-гоу") +
+    "</div>" +
+    '<div class="row" style="margin-top:14px; gap:22px;">' +
+      '<label class="row" style="gap:7px; cursor:pointer;"><input type="checkbox" data-gate="op"' +
+        (state.gateOp ? " checked" : "") + ' /> <span class="small">Только там, где ОП работает с лидом в день заявки</span></label>' +
+      '<label class="row" style="gap:7px; cursor:pointer;"><input type="checkbox" data-gate="attr"' +
+        (state.gateAttr ? " checked" : "") + ' /> <span class="small">Только там, где сохраняется сквозная атрибуция</span></label>' +
+    "</div></div></div>";
+}
+
+function bindWeightsPanel(root) {
+  root.querySelectorAll("[data-preset]").forEach(function (b) {
+    b.onclick = function () {
+      var p = PRESETS.filter(function (x) { return x.id === b.dataset.preset; })[0];
+      state.weights = { i: p.w.i, c: p.w.c, e: p.w.e, t: p.w.t };
+      saveLocal(); renderAll();
+    };
+  });
+  root.querySelectorAll("[data-w]").forEach(function (inp) {
+    inp.oninput = function () {
+      state.weights[inp.dataset.w] = Number(inp.value);
+      saveLocal(); renderAll();
+    };
+  });
+  root.querySelectorAll("[data-gate]").forEach(function (cb) {
+    cb.onchange = function () {
+      if (cb.dataset.gate === "op") state.gateOp = cb.checked; else state.gateAttr = cb.checked;
+      saveLocal(); renderAll();
+    };
+  });
+}
+
+/* ---------- таблица ранжирования ---------- */
+function rankingTable(getVals, opts) {
+  opts = opts || {};
+  var rows = HYPOS
+    .filter(function (h) { return (!state.gateOp || h.opGate) && (!state.gateAttr || h.attrGate); })
+    .map(function (h) { var v = getVals(h); return { h: h, v: v, s: score(v, state.weights) }; })
+    .sort(function (a, b) { return b.s - a.s; });
+
+  if (!rows.length) return '<table><tr><td class="dim" style="padding:18px;">Гейты не пропустили ни одной гипотезы</td></tr></table>';
+  var max = rows[0].s || 1;
+
+  var body = rows.map(function (r, i) {
+    var gates = (r.h.opGate ? '<span class="pill">ОП</span> ' : "") +
+                (r.h.attrGate ? '<span class="pill">Атрибуция</span>' : "");
+    var extra = opts.extraCell ? opts.extraCell(r.h) : "";
+    return "<tr>" +
+      '<td class="ta-r dim num">' + (i + 1) + "</td>" +
+      "<td><div" + (i === 0 ? ' style="font-weight:600;"' : "") + ">" + esc(r.h.name) + "</div>" +
+        '<div class="tiny">' + esc(r.h.status) + " · " + esc(r.h.author) + " " + gates + "</div></td>" +
+      '<td class="ta-r num">' + r.v.impact + "</td>" +
+      '<td class="ta-r num">' + Math.round(r.v.confidence) + "%</td>" +
+      '<td class="ta-r num">' + r.v.effort + "д</td>" +
+      '<td class="ta-r num">' + r.v.signal + "д</td>" +
+      extra +
+      '<td class="ta-r num" style="font-weight:600;' + (i === 0 ? "color:var(--accent);" : "") + '">' + fmtScore(r.s) + "</td>" +
+      '<td><div class="bar' + (i === 0 ? " top" : "") + '"><i style="width:' +
+        Math.max(2, (r.s / max) * 100) + '%"></i></div></td>' +
+      "</tr>";
+  }).join("");
+
+  return "<table><tr><th class='ta-r'>#</th><th>Гипотеза</th><th class='ta-r'>I</th><th class='ta-r'>C</th>" +
+    "<th class='ta-r'>E</th><th class='ta-r'>T</th>" + (opts.extraHead || "") +
+    "<th class='ta-r'>Балл</th><th></th></tr>" + body + "</table>";
+}
+
+/* ---------- карточки гипотез ---------- */
+function renderHypoList() {
+  var el = document.getElementById("hypoList");
+  el.innerHTML = HYPOS.map(function (h) {
+    var v = state.values[h.id];
+    function f(key, label, suffix, step) {
+      return '<label class="fld">' + label + (suffix ? ", " + suffix : "") +
+        '<input type="number" step="' + step + '" min="0" value="' + v[key] +
+        '" data-h="' + h.id + '" data-f="' + key + '" /></label>';
+    }
+    var quote = h.quote
+      ? '<div class="quote">' + esc(h.quote) + '</div><div class="tiny">' + esc(h.quoteWho) + "</div>"
+      : "";
+    return '<div class="card"><div class="card-h"><span>' + esc(h.name) +
+      '</span><span class="dim">' + esc(h.status) + "</span></div><div class=\"card-b\">" +
+      '<div class="tiny" style="margin-bottom:8px;">' + esc(h.author) + " · " + esc(h.source) + "</div>" +
+      "<p class=\"muted\" style=\"margin-bottom:4px;\">" + esc(h.desc) + "</p>" + quote +
+      '<div class="row" style="gap:16px; align-items:flex-end; margin-top:14px;">' +
+        f("impact", "Impact", "", "0.25") +
+        f("confidence", "Confidence", "%", "5") +
+        f("effort", "Effort", "дн", "1") +
+        f("signal", "Time-to-signal", "дн", "1") +
+        '<span class="pill' + (h.opGate ? " on" : "") + '">ОП ' + (h.opGate ? "да" : "нет") + "</span>" +
+        '<span class="pill' + (h.attrGate ? " on" : "") + '">Атрибуция ' + (h.attrGate ? "да" : "нет") + "</span>" +
+      "</div>" +
+      "<details><summary>Плюсы и минусы — " + esc(h.prosSource) + "</summary>" +
+        '<div class="grid2" style="margin-top:10px;">' +
+          "<div><div class=\"small\" style=\"font-weight:600;\">Плюсы</div><ul class=\"tight\">" +
+            h.pros.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul></div>" +
+          "<div><div class=\"small\" style=\"font-weight:600;\">Минусы и риски</div><ul class=\"tight\">" +
+            h.cons.map(function (c) { return "<li>" + esc(c) + "</li>"; }).join("") + "</ul></div>" +
+        "</div></details>" +
+      "</div></div>";
+  }).join("");
+
+  el.querySelectorAll("input[data-h]").forEach(function (inp) {
+    inp.oninput = function () {
+      var n = Number(inp.value);
+      if (isNaN(n) || n < 0) return;
+      state.values[inp.dataset.h][inp.dataset.f] = n;
+      saveLocal();
+      document.getElementById("myRanking").innerHTML =
+        rankingTable(function (h) { return state.values[h.id]; });
+    };
+  });
+}
+
+/* ---------- рендер ---------- */
+function renderAll() {
+  var wp = document.getElementById("weightsPanel");
+  wp.innerHTML = weightsPanelHTML("my");
+  bindWeightsPanel(wp);
+
+  document.getElementById("myRanking").innerHTML =
+    rankingTable(function (h) { return state.values[h.id]; });
+
+  var tw = document.getElementById("teamWeights");
+  if (tw && !document.getElementById("teamBody").classList.contains("hidden")) {
+    tw.innerHTML = weightsPanelHTML("team");
+    bindWeightsPanel(tw);
+    renderTeam();
+  }
+
+  var st = document.getElementById("whoStatus");
+  st.textContent = state.submitted ? "оценки отправлены" : "черновик";
+}
+
+/* ---------- сводка команды ---------- */
+var teamRows = [];
+
+function renderTeam() {
+  if (!teamRows.length) {
+    document.getElementById("teamRanking").innerHTML =
+      '<table><tr><td class="dim" style="padding:18px;">Пока нет ни одной отправленной оценки</td></tr></table>';
+    document.getElementById("teamRaw").innerHTML = "";
+    document.getElementById("disagree").innerHTML = "";
+    document.getElementById("teamMeta").textContent = "";
+    return;
+  }
+
+  var people = [];
+  teamRows.forEach(function (r) { if (people.indexOf(r.person) < 0) people.push(r.person); });
+
+  var byHypo = {};
+  teamRows.forEach(function (r) {
+    (byHypo[r.hypothesisId] = byHypo[r.hypothesisId] || []).push(r);
+  });
+
+  function avg(h) {
+    var list = byHypo[h.id] || [];
+    if (!list.length) return { impact: h.impact, confidence: h.confidence, effort: h.effort, signal: h.signal, n: 0 };
+    function m(k) { return list.reduce(function (a, r) { return a + r[k]; }, 0) / list.length; }
+    return {
+      impact: Math.round(m("impact") * 100) / 100,
+      confidence: Math.round(m("confidence")),
+      effort: Math.round(m("effort") * 10) / 10,
+      signal: Math.round(m("signal") * 10) / 10,
+      n: list.length
+    };
+  }
+
+  document.getElementById("teamRanking").innerHTML = rankingTable(avg, {
+    extraHead: "<th class='ta-r'>Оценок</th>",
+    extraCell: function (h) { return '<td class="ta-r dim num">' + (byHypo[h.id] || []).length + "</td>"; }
+  });
+  document.getElementById("teamMeta").textContent =
+    "Заполнили: " + people.join(", ") + ". Всего " + people.length + " из 5.";
+
+  var flags = [];
+  HYPOS.forEach(function (h) {
+    var list = byHypo[h.id] || [];
+    if (list.length < 2) return;
+    function span(k) {
+      var vals = list.map(function (r) { return r[k]; });
+      return { min: Math.min.apply(null, vals), max: Math.max.apply(null, vals) };
+    }
+    var im = span("impact"), ef = span("effort");
+    var reasons = [];
+    if (im.max - im.min >= 2) reasons.push("Impact расходится от " + im.min + " до " + im.max);
+    if (ef.min > 0 && ef.max / ef.min >= 2) reasons.push("Effort расходится от " + ef.min + " до " + ef.max + " дней");
+    if (reasons.length) flags.push("<li><b>" + esc(h.name) + "</b> — " + reasons.join("; ") + "</li>");
+  });
+  document.getElementById("disagree").innerHTML = flags.length
+    ? '<div class="callout warn" style="margin-top:16px;"><div class="t">Требует обсуждения на встрече</div>' +
+      '<ul class="tight spread-hi">' + flags.join("") + "</ul>" +
+      '<p class="tiny" style="margin:8px 0 0;">Порог: разница по Impact от 2 баллов или разница по Effort вдвое и больше. Усреднять такое нельзя — среднее спрячет разногласие.</p></div>'
+    : "";
+
+  var head = "<tr><th>Гипотеза</th>" + people.map(function (p) {
+    return "<th class='ta-c'>" + esc(p.split(" ")[0]) + "</th>";
+  }).join("") + "</tr>";
+  var body = HYPOS.map(function (h) {
+    return "<tr><td>" + esc(h.name) + "</td>" + people.map(function (p) {
+      var r = (byHypo[h.id] || []).filter(function (x) { return x.person === p; })[0];
+      return '<td class="ta-c num small">' + (r ? r.impact + " / " + r.confidence + "% / " + r.effort + "д / " + r.signal + "д" : "<span class='dim'>—</span>") + "</td>";
+    }).join("") + "</tr>";
+  }).join("");
+  document.getElementById("teamRaw").innerHTML =
+    "<table>" + head + body + "</table>" +
+    "<div class='tiny' style='padding:8px 10px;'>В ячейке: Impact / Confidence / Effort / Time-to-signal</div>";
+}
+
+function unlockTeam() {
+  document.getElementById("teamLocked").classList.add("hidden");
+  document.getElementById("teamBody").classList.remove("hidden");
+  var tw = document.getElementById("teamWeights");
+  tw.innerHTML = weightsPanelHTML("team");
+  bindWeightsPanel(tw);
+  renderTeam();
+}
+
+function fetchTeam(cb) {
+  if (!API_URL) { if (cb) cb(); return; }
+  fetch(API_URL, { method: "GET" })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d && d.ok) teamRows = d.rows || [];
+      if (cb) cb();
+    })
+    .catch(function () { if (cb) cb(); });
+}
+
+/* ---------- отправка ---------- */
+function payload() {
+  return {
+    person: state.person,
+    scores: HYPOS.map(function (h) {
+      var v = state.values[h.id];
+      return { id: h.id, name: h.name, impact: v.impact, confidence: v.confidence, effort: v.effort, signal: v.signal };
+    })
+  };
+}
+
+function setStatus(msg, tone) {
+  var el = document.getElementById("saveStatus");
+  el.textContent = msg;
+  el.style.color = tone === "err" ? "var(--danger)" : tone === "ok" ? "var(--ok)" : "var(--text-3)";
+}
+
+document.getElementById("saveBtn").onclick = function () {
+  if (!state.person) { setStatus("Сначала выберите себя в списке выше", "err"); return; }
+  if (!API_URL) { setStatus("Хранилище не подключено — воспользуйтесь кнопкой «Скопировать результат»", "err"); return; }
+  var btn = this;
+  btn.disabled = true; setStatus("Отправляем…");
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload())
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      btn.disabled = false;
+      if (d && d.ok) {
+        state.submitted = true; saveLocal();
+        setStatus("Сохранено: " + d.saved + " строк. Сводка команды разблокирована.", "ok");
+        fetchTeam(function () { unlockTeam(); renderAll(); });
+      } else {
+        setStatus("Ошибка: " + ((d && d.error) || "неизвестно"), "err");
+      }
+    })
+    .catch(function (e) { btn.disabled = false; setStatus("Не удалось отправить: " + e.message, "err"); });
+};
+
+document.getElementById("copyBtn").onclick = function () {
+  if (!state.person) { setStatus("Сначала выберите себя в списке выше", "err"); return; }
+  var text = JSON.stringify(payload(), null, 2);
+  navigator.clipboard.writeText(text).then(
+    function () { setStatus("Скопировано в буфер — пришлите текст Саше", "ok"); },
+    function () { setStatus("Не удалось скопировать, скопируйте вручную из консоли", "err"); console.log(text); }
+  );
+};
+
+document.getElementById("resetBtn").onclick = function () {
+  if (!confirm("Вернуть все значения к исходному черновику Саши?")) return;
+  HYPOS.forEach(function (h) {
+    state.values[h.id] = { impact: h.impact, confidence: h.confidence, effort: h.effort, signal: h.signal };
+  });
+  saveLocal(); renderHypoList(); renderAll(); setStatus("Значения возвращены к черновику");
+};
+
+document.getElementById("reloadBtn").onclick = function () {
+  fetchTeam(function () { renderTeam(); });
+};
+
+document.getElementById("person").onchange = function () {
+  state.person = this.value; saveLocal(); renderAll();
+};
+
+/* ---------- вкладки ---------- */
+document.querySelectorAll("button.tab").forEach(function (b) {
+  b.onclick = function () {
+    document.querySelectorAll("button.tab").forEach(function (x) { x.classList.remove("on"); });
+    b.classList.add("on");
+    ["context", "score", "method", "team"].forEach(function (t) {
+      document.getElementById("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab);
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+});
+
+/* ---------- калькулятор Time-to-signal ---------- */
+function recalcTts() {
+  var b = Number(document.getElementById("ttsBudget").value) || 0;
+  var c = Number(document.getElementById("ttsCpl").value) || 0;
+  var l = Number(document.getElementById("ttsLeads").value) || 0;
+  var a = Number(document.getElementById("ttsAdm").value) || 0;
+  var perDay = c > 0 ? b / c : 0;
+  var days = perDay > 0 ? Math.ceil(l / perDay) : 0;
+  document.getElementById("ttsPerDay").textContent = perDay.toFixed(1);
+  document.getElementById("ttsDays").textContent = days + " дн";
+  document.getElementById("ttsBase").textContent = (a + days) + " дн";
+}
+["ttsBudget", "ttsCpl", "ttsLeads", "ttsAdm"].forEach(function (id) {
+  document.getElementById(id).oninput = recalcTts;
+});
+
+/* ---------- старт ---------- */
+loadLocal();
+if (state.person) document.getElementById("person").value = state.person;
+if (!API_URL) document.getElementById("apiWarn").classList.remove("hidden");
+renderHypoList();
+renderAll();
+recalcTts();
+fetchTeam(function () {
+  if (state.submitted || teamRows.some(function (r) { return r.person === state.person; })) {
+    state.submitted = true; saveLocal(); unlockTeam();
+  }
+  renderAll();
+});
+</script>
+</body>
+</html>
